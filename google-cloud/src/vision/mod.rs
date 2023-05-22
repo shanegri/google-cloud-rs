@@ -4,6 +4,7 @@ mod face;
 mod image;
 mod likelihood;
 mod text;
+mod web;
 mod api {
     pub mod rpc {
         include!("api/google.rpc.rs");
@@ -38,6 +39,7 @@ pub use self::face::*;
 pub use self::image::*;
 pub use self::likelihood::*;
 pub use self::text::*;
+pub use self::web::*;
 
 /// The error type for the Cloud Vision module.
 pub type Error = crate::error::Error;

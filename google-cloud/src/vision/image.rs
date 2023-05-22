@@ -1,4 +1,4 @@
-use std::io;
+use std::{io, vec};
 
 use crate::vision::api;
 
@@ -17,6 +17,14 @@ pub(crate) enum ImageInner {
 }
 
 impl Image {
+
+    /// Constructs an image by copying from bytes
+    pub fn clone_from_bytes(data: &Vec<u8>) -> Image {
+        Image {
+            inner: ImageInner::Bytes(data.clone()),
+        }
+    }
+
     /// Constructs an image directly from bytes.
     pub fn from_bytes(data: impl Into<Vec<u8>>) -> Image {
         Image {

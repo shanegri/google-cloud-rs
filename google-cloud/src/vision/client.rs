@@ -12,7 +12,7 @@ use crate::vision::api;
 use crate::vision::api::image_annotator_client::ImageAnnotatorClient;
 use crate::vision::api::product_search_client::ProductSearchClient;
 use crate::vision::{
-    Error, FaceAnnotation, FaceDetectionConfig, Image, TextAnnotation, TextDetectionConfig,
+    Error, FaceAnnotation, FaceDetectionConfig, Image, TextAnnotation, TextDetectionConfig, WebDetectionConfig
 };
 
 /// The Cloud Vision client, tied to a specific project.
@@ -142,4 +142,59 @@ impl Client {
 
         Ok(annotations)
     }
+
+    /// Perform web detection on the given image.
+    pub async fn web_detection(
+        &mut self,
+        image: Image,
+        config: WebDetectionConfig,
+    ) -> Result<api::WebDetection, Error> {
+        let request = api::AnnotateImageRequest {
+            image: Some(image.into()),
+            features: vec![api::Feature {
+                r#type: api::feature::Type::WebDetection as i32,
+                max_results: config.max_results,
+                model: String::from("builtin/stable"),
+            }],
+            image_context: Some(config.into()),
+        };
+        let request = api::BatchAnnotateImagesRequest {
+            requests: vec![request],
+            parent: String::default(),
+        };
+        let request = self.construct_request(request).await?;
+        let response = self.img_annotator.batch_annotate_images(request).await?;
+        let response = response.into_inner();
+        let response: api::AnnotateImageResponse = response.responses.into_iter().next().unwrap();
+        let web_detection = response.web_detection.unwrap();
+        Ok(web_detection)
+    }
+
+    /// Perform label annotations on the given image.
+    pub async fn label_annotations(
+        &mut self,
+        image: Image,
+        config: WebDetectionConfig,
+    ) -> Result<Vec<api::EntityAnnotation>, Error> {
+        let request = api::AnnotateImageRequest {
+            image: Some(image.into()),
+            features: vec![api::Feature {
+                r#type: api::feature::Type::LabelDetection as i32,
+                max_results: config.max_results,
+                model: String::from("builtin/stable"),
+            }],
+            image_context: None,
+        };
+        let request = api::BatchAnnotateImagesRequest {
+            requests: vec![request],
+            parent: String::default(),
+        };
+        let request = self.construct_request(request).await?;
+        let response = self.img_annotator.batch_annotate_images(request).await?;
+        let response = response.into_inner();
+        let response: api::AnnotateImageResponse = response.responses.into_iter().next().unwrap();
+
+        Ok(response.label_annotations)
+    }
+    
 }
