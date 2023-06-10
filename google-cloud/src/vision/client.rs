@@ -12,8 +12,11 @@ use crate::vision::api;
 use crate::vision::api::image_annotator_client::ImageAnnotatorClient;
 use crate::vision::api::product_search_client::ProductSearchClient;
 use crate::vision::{
-    Error, FaceAnnotation, FaceDetectionConfig, Image, TextAnnotation, TextDetectionConfig, WebDetectionConfig
+    Error, FaceAnnotation, FaceDetectionConfig, Image, TextAnnotation, TextDetectionConfig,
+    WebDetectionConfig,
 };
+
+use super::{BatchRequest, FeatureConfig, LabelDetectionConfig};
 
 /// The Cloud Vision client, tied to a specific project.
 #[derive(Clone)]
@@ -79,6 +82,23 @@ impl Client {
         })
     }
 
+    /// Annotate a batch of images
+    pub async fn batch_request(
+        &mut self,
+        batch: BatchRequest,
+    ) -> Result<Vec<api::AnnotateImageResponse>, Error> {
+        let request = api::BatchAnnotateImagesRequest {
+            requests: batch.requests,
+            parent: String::default(), // TODO: Make this configurable (specifying computation region).
+        };
+        let request = self.construct_request(request).await?;
+        let response = self.img_annotator.batch_annotate_images(request).await?;
+        let response = response.into_inner();
+        let response = response.responses;
+
+        Ok(response)
+    }
+
     /// Perform text detection on the given image.
     pub async fn detect_document_text(
         &mut self,
@@ -87,12 +107,8 @@ impl Client {
     ) -> Result<Vec<TextAnnotation>, Error> {
         let request = api::AnnotateImageRequest {
             image: Some(image.into()),
-            features: vec![api::Feature {
-                r#type: api::feature::Type::TextDetection as i32,
-                max_results: 0, // Does not apply for TEXT_DETECTION, so set it to zero.
-                model: String::from("builtin/stable"),
-            }],
-            image_context: Some(config.into()),
+            features: vec![config.to_owned().into()],
+            image_context: Some(config.update_context(api::ImageContext::default())),
         };
         let request = api::BatchAnnotateImagesRequest {
             requests: vec![request],
@@ -119,11 +135,7 @@ impl Client {
     ) -> Result<Vec<FaceAnnotation>, Error> {
         let request = api::AnnotateImageRequest {
             image: Some(image.into()),
-            features: vec![api::Feature {
-                r#type: api::feature::Type::FaceDetection as i32,
-                max_results: config.max_results,
-                model: String::from("builtin/stable"),
-            }],
+            features: vec![config.to_owned().into()],
             image_context: None,
         };
         let request = api::BatchAnnotateImagesRequest {
@@ -151,12 +163,8 @@ impl Client {
     ) -> Result<api::WebDetection, Error> {
         let request = api::AnnotateImageRequest {
             image: Some(image.into()),
-            features: vec![api::Feature {
-                r#type: api::feature::Type::WebDetection as i32,
-                max_results: config.max_results,
-                model: String::from("builtin/stable"),
-            }],
-            image_context: Some(config.into()),
+            features: vec![config.to_owned().into()],
+            image_context: Some(config.update_context(api::ImageContext::default())),
         };
         let request = api::BatchAnnotateImagesRequest {
             requests: vec![request],
@@ -174,16 +182,12 @@ impl Client {
     pub async fn label_annotations(
         &mut self,
         image: Image,
-        config: WebDetectionConfig,
+        config: LabelDetectionConfig,
     ) -> Result<Vec<api::EntityAnnotation>, Error> {
         let request = api::AnnotateImageRequest {
             image: Some(image.into()),
-            features: vec![api::Feature {
-                r#type: api::feature::Type::LabelDetection as i32,
-                max_results: config.max_results,
-                model: String::from("builtin/stable"),
-            }],
-            image_context: None,
+            features: vec![config.to_owned().into()],
+            image_context: Some(config.update_context(api::ImageContext::default())),
         };
         let request = api::BatchAnnotateImagesRequest {
             requests: vec![request],
@@ -196,5 +200,4 @@ impl Client {
 
         Ok(response.label_annotations)
     }
-    
 }

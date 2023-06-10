@@ -1,7 +1,9 @@
 mod bounding_box;
+mod builder;
 mod client;
 mod face;
 mod image;
+mod label;
 mod likelihood;
 mod text;
 mod web;
@@ -34,9 +36,11 @@ mod api {
 }
 
 pub use self::bounding_box::*;
+pub use self::builder::*;
 pub use self::client::*;
 pub use self::face::*;
 pub use self::image::*;
+pub use self::label::*;
 pub use self::likelihood::*;
 pub use self::text::*;
 pub use self::web::*;

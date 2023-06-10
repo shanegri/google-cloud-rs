@@ -31,6 +31,9 @@ pub enum Error {
     /// authentication-related error.
     #[error("authentication error: {0}")]
     Auth(#[from] AuthError),
+    /// batch request error.
+    #[error("batch request error: {0}")]
+    Batch(#[from] BatchError),
 }
 
 /// The error type for value conversions.
@@ -64,4 +67,15 @@ pub enum AuthError {
     /// Hyper errors
     #[error("Hyper error: {0}")]
     Hyper(#[from] hyper::Error),
+}
+
+/// The error type for batch request errors.
+#[derive(Debug, Error)]
+pub enum BatchError {
+    /// No images provided to a batch request.
+    #[error("no images provided to batch request")]
+    ImagesRequired,
+    /// No features provided to a batch request.
+    #[error("no features provided to batch request")]
+    FeaturesRequired,
 }

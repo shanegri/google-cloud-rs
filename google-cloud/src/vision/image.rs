@@ -17,7 +17,6 @@ pub(crate) enum ImageInner {
 }
 
 impl Image {
-
     /// Constructs an image by copying from bytes
     pub fn clone_from_bytes(data: &Vec<u8>) -> Image {
         Image {

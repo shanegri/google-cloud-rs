@@ -33,6 +33,6 @@ async fn vision_detects_text_successfully() {
     //? https://github.com/googleapis/nodejs-vision/issues/270#issuecomment-481064953
     // let image = vision::Image::from_url("https://placehold.it/500");
 
-    let config = vision::TextDetectionConfig::default();
+    let config = vision::TextDetectionConfig::new(vision::TextDetectionType::TextDetection);
     assert_ok!(client.detect_document_text(image, config).await);
 }

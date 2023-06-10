@@ -1,6 +1,7 @@
-use crate::vision::api;
+use crate::vision::{api, FeatureConfig};
 
 /// Configuration for a web detections request
+#[derive(Clone)]
 pub struct WebDetectionConfig {
     /// Maximum number of web results to return
     pub(crate) max_results: i32,
@@ -10,28 +11,44 @@ pub struct WebDetectionConfig {
 }
 
 impl WebDetectionConfig {
-    /// Create new config 
+    /// Create new config
     pub fn new(max_results: i32, include_geo_results: bool) -> Self {
-        WebDetectionConfig { max_results, include_geo_results }
+        WebDetectionConfig {
+            max_results,
+            include_geo_results,
+        }
     }
 }
 
 impl Default for WebDetectionConfig {
     fn default() -> Self {
-        WebDetectionConfig { max_results: 10, include_geo_results: false }
+        WebDetectionConfig {
+            max_results: 10,
+            include_geo_results: false,
+        }
     }
 }
 
-impl From<WebDetectionConfig> for api::ImageContext {
-    fn from(config: WebDetectionConfig) -> api::ImageContext {
+impl FeatureConfig for WebDetectionConfig {
+    fn feature_type(&self) -> api::feature::Type {
+        api::feature::Type::TextDetection
+    }
+    fn update_context(&self, context: api::ImageContext) -> api::ImageContext {
         api::ImageContext {
-            lat_long_rect: None,
-            crop_hints_params: None,
-            product_search_params: None,
             web_detection_params: Some(api::WebDetectionParams {
-                include_geo_results: config.include_geo_results
+                include_geo_results: self.include_geo_results,
             }),
-            language_hints: vec![],
+            ..context
+        }
+    }
+}
+
+impl Into<api::Feature> for WebDetectionConfig {
+    fn into(self) -> api::Feature {
+        api::Feature {
+            r#type: api::feature::Type::WebDetection as i32,
+            max_results: self.max_results,
+            model: String::from("builtin/stable"),
         }
     }
 }
