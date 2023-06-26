@@ -28,3 +28,12 @@ impl From<api::EntityAnnotation> for TextAnnotation {
         }
     }
 }
+
+impl From<&api::EntityAnnotation> for TextAnnotation {
+    fn from(ann: &api::EntityAnnotation) -> TextAnnotation {
+        TextAnnotation {
+            description: ann.description.clone(),
+            bounding_box: BoundingBox::from(ann.bounding_poly.clone().unwrap()),
+        }
+    }
+}
